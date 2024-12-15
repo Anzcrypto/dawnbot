@@ -94,26 +94,25 @@ class DawnValidatorBot:
             return 0
 
     async def keep_alive_request(self, headers: Dict[str, str], email: str) -> bool:
-        payload = {
-            "username": email,
-            "extensionid": self.EXTENSION_ID,
-            "numberoftabs": 0,
-            "_v": self.VERSION
-        }
-        
-        try:
-            scraper = cloudscraper.create_scraper()
-            response = scraper.post(
-            response = self.session.post(
-                f"{self.API_URLS['keepalive']}?appid=675f168c9e13e15af4311da1",
-                json=payload,
-                headers=headers
-            )
-            response.raise_for_status()
-            return True
-        except Exception as e:
-            self.log_colored("ERROR", f"Keep-alive failed for {email}: {str(e)}", Colors.ERROR)
-            return False
+    payload = {
+        "username": email,
+        "extensionid": self.EXTENSION_ID,
+        "numberoftabs": 0,
+        "_v": self.VERSION
+    }
+
+    try:
+        scraper = cloudscraper.create_scraper()
+        response = scraper.post(
+            f"{self.API_URLS['keepalive']}?appid=675f168c9e13e15af4311da1",
+            json=payload,
+            headers=headers
+        )
+        response.raise_for_status()
+        return True
+    except Exception as e:
+        self.log_colored("ERROR", f"Keep-alive failed for {email}: {str(e)}", Colors.ERROR)
+        return False
 
     async def verify_social_media(self, account: Dict[str, str], proxy: Optional[str] = None) -> None:
         email = account['email']
