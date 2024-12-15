@@ -6,13 +6,11 @@ An automation script for account validation, point retrieval, and social media v
 1. **Clone the repository**:  
    ```bash
    git clone https://github.com/Anzcrypto/dawnbot
-   cd dwnbot
+   cd dawnbot
 
 2. **Install requirements**:
 ```bash
 pip install -r requirements.txt
-
-
 
 input Files
 
