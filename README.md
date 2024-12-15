@@ -9,21 +9,20 @@ An automation script for account validation, point retrieval, and social media v
    cd dawnbot
 
 2. **Install requirements**:
-```bash
-pip install -r requirements.txt
+```bash pip install -r requirements.txt```
 
-input Files
+3.**input Files**:
 
 accounts.txt = Format email:token (one per line).
 
 proxies.txt = Format http://proxy:port.
 
 
-Running the Script
+**Running the Script**
 
 Run with:
-```bash
-python main.py
+
+```bash python main.py```
 
 **Notes**
 
