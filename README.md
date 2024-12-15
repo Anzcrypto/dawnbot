@@ -31,6 +31,16 @@ This bot automates the process of validating accounts and fetching points using 
      ```
 
    - `proxies.txt` should contain a list of proxies if you intend to use them.
+## How to Get Bearer Token
+
+To use the bot, you will need to obtain a Bearer token. Follow these steps to get it:
+
+1. **Log in to the Dawn platform** using your browser.
+2. Open **Developer Tools** in your browser (press `F12` or `Ctrl+Shift+I`).
+3. Go to the **Network** tab.
+4. Perform any action that requires authentication (e.g., logging in or making a request).
+5. Look for the request in the **Network** tab that includes an `Authorization` header with the Bearer token.
+6. Copy the token from the `Authorization` header.
 
 ## Running the Script
 
