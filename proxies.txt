@@ -1,0 +1,2 @@
+# Example Format
+email:token
