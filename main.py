@@ -1,4 +1,3 @@
-import cloudscraper
 import asyncio
 import logging
 import ssl
@@ -7,20 +6,24 @@ import random
 from datetime import datetime
 from typing import Dict, List, Optional, Set
 
-import requests
+import cloudscraper
 from colorama import Fore, Style, init
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
 
+# Inisialisasi
 init(autoreset=True)
-warnings.simplefilter('ignore', InsecureRequestWarning)
+warnings.simplefilter("ignore", InsecureRequestWarning)
 ssl._create_default_https_context = ssl._create_unverified_context
 
+# Logging
 logging.basicConfig(
-    format='%(asctime)s - %(levelname)s - %(message)s',
-    datefmt='%H:%M:%S',
-    level=logging.INFO
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    datefmt="%H:%M:%S",
+    level=logging.INFO,
 )
 
+
+# Kelas Warna untuk Output
 class Colors:
     SUCCESS = f"{Fore.GREEN}"
     ERROR = f"{Fore.RED}"
@@ -28,11 +31,13 @@ class Colors:
     WARNING = f"{Fore.YELLOW}"
     RESET = f"{Style.RESET_ALL}"
 
+
+# Bot Validator
 class DawnValidatorBot:
     API_URLS = {
         "keepalive": "https://www.aeropres.in/chromeapi/dawn/v1/userreward/keepalive",
         "getPoints": "https://www.aeropres.in/api/atom/v1/userreferral/getpoint",
-        "socialmedia": "https://www.aeropres.in/chromeapi/dawn/v1/profile/update"
+        "socialmedia": "https://www.aeropres.in/chromeapi/dawn/v1/profile/update",
     }
 
     EXTENSION_ID = "675f168c9e13e15af4311da1"
@@ -40,8 +45,7 @@ class DawnValidatorBot:
 
     def __init__(self):
         self.verified_accounts: Set[str] = set()
-        self.session = requests.Session()
-        self.session.verify = False
+        self.scraper = cloudscraper.create_scraper()
         self.proxies: List[str] = []
 
     def get_base_headers(self, token: str) -> Dict[str, str]:
@@ -50,7 +54,10 @@ class DawnValidatorBot:
             "Authorization": f"Bearer {token}",
             "Content-Type": "application/json",
             "Origin": f"chrome-extension://{self.EXTENSION_ID}",
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"
+            "User-Agent": (
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"
+            ),
         }
 
     @staticmethod
@@ -63,30 +70,32 @@ class DawnValidatorBot:
 
     async def fetch_points(self, headers: Dict[str, str]) -> int:
         try:
-            response = self.session.get(
+            response = self.scraper.get(
                 f"{self.API_URLS['getPoints']}?appid=675f168c9e13e15af4311da1",
-                headers=headers
+                headers=headers,
             )
             response.raise_for_status()
             data = response.json()
-            
-            if not data.get('status'):
-                raise ValueError(data.get('message', 'Unknown error'))
 
-            points_data = data.get('data', {})
-            reward = points_data.get('rewardPoint', {})
-            referral = points_data.get('referralPoint', {})
-            
-            total = sum([
-                reward.get('points', 0),
-                reward.get('registerpoints', 0),
-                reward.get('signinpoints', 0),
-                reward.get('twitter_x_id_points', 0),
-                reward.get('discordid_points', 0),
-                reward.get('telegramid_points', 0),
-                reward.get('bonus_points', 0),
-                referral.get('commission', 0)
-            ])
+            if not data.get("status"):
+                raise ValueError(data.get("message", "Unknown error"))
+
+            points_data = data.get("data", {})
+            reward = points_data.get("rewardPoint", {})
+            referral = points_data.get("referralPoint", {})
+
+            total = sum(
+                [
+                    reward.get("points", 0),
+                    reward.get("registerpoints", 0),
+                    reward.get("signinpoints", 0),
+                    reward.get("twitter_x_id_points", 0),
+                    reward.get("discordid_points", 0),
+                    reward.get("telegramid_points", 0),
+                    reward.get("bonus_points", 0),
+                    referral.get("commission", 0),
+                ]
+            )
             return total
 
         except Exception as e:
@@ -94,148 +103,136 @@ class DawnValidatorBot:
             return 0
 
     async def keep_alive_request(self, headers: Dict[str, str], email: str) -> bool:
-    payload = {
-        "username": email,
-        "extensionid": self.EXTENSION_ID,
-        "numberoftabs": 0,
-        "_v": self.VERSION
-    }
+        payload = {
+            "username": email,
+            "extensionid": self.EXTENSION_ID,
+            "numberoftabs": 0,
+            "_v": self.VERSION,
+        }
 
-    try:
-        scraper = cloudscraper.create_scraper()
-        response = scraper.post(
-            f"{self.API_URLS['keepalive']}?appid=675f168c9e13e15af4311da1",
-            json=payload,
-            headers=headers
-        )
-        response.raise_for_status()
-        return True
-    except Exception as e:
-        self.log_colored("ERROR", f"Keep-alive failed for {email}: {str(e)}", Colors.ERROR)
-        return False
+        try:
+            response = self.scraper.post(
+                f"{self.API_URLS['keepalive']}?appid=675f168c9e13e15af4311da1",
+                json=payload,
+                headers=headers,
+            )
+            response.raise_for_status()
+            return True
+        except Exception as e:
+            self.log_colored(
+                "ERROR", f"Keep-alive failed for {email}: {str(e)}", Colors.ERROR
+            )
+            return False
 
     async def verify_social_media(self, account: Dict[str, str], proxy: Optional[str] = None) -> None:
-        email = account['email']
-        
+        email = account["email"]
+
         if email in self.verified_accounts:
             return
-            
-        headers = self.get_base_headers(account['token'])
+
+        headers = self.get_base_headers(account["token"])
         if proxy:
-            headers['Proxy'] = proxy
+            headers["Proxy"] = proxy
 
         social_types = ["twitter_x_id", "discordid", "telegramid"]
-        
-        self.log_colored("INFO", f"Starting social media verification for {email}", Colors.INFO)
-        
+
+        self.log_colored(
+            "INFO", f"Starting social media verification for {email}", Colors.INFO
+        )
+
         for social_type in social_types:
             try:
-                response = self.session.post(
+                response = self.scraper.post(
                     f"{self.API_URLS['socialmedia']}?appid=675f168c9e13e15af4311da1",
                     json={social_type: social_type},
                     headers=headers,
-                    timeout=60
+                    timeout=60,
                 )
                 response.raise_for_status()
-                
+
                 result = response.json()
-                if result.get('success'):
-                    self.log_colored("SUCCESS", f"Verified {social_type} for {email}", Colors.SUCCESS)
+                if result.get("success"):
+                    self.log_colored(
+                        "SUCCESS", f"Verified {social_type} for {email}", Colors.SUCCESS
+                    )
                 else:
-                    self.log_colored("ERROR", f"Failed to verify {social_type} for {email}: {result.get('message')}", Colors.ERROR)
-                
+                    self.log_colored(
+                        "ERROR",
+                        f"Failed to verify {social_type} for {email}: {result.get('message')}",
+                        Colors.ERROR,
+                    )
+
             except Exception as e:
-                self.log_colored("ERROR", f"Error verifying {social_type} for {email}: {str(e)}", Colors.ERROR)
-            
+                self.log_colored(
+                    "ERROR", f"Error verifying {social_type} for {email}: {str(e)}", Colors.ERROR
+                )
+
             await asyncio.sleep(90)
-        
-        self.log_colored("INFO", f"Completed social media verification for {email}", Colors.INFO)
+
+        self.log_colored(
+            "INFO", f"Completed social media verification for {email}", Colors.INFO
+        )
         self.verified_accounts.add(email)
 
     @staticmethod
-    def load_accounts(mode: str) -> List[Dict[str, str]]:
-        if mode == "1":
-            return DawnValidatorBot._get_single_account()
-        return DawnValidatorBot._load_accounts_from_file()
-
-    @staticmethod
-    def _get_single_account() -> List[Dict[str, str]]:
-        print(f"{Colors.INFO}Please enter account details{Colors.RESET}")
-        
-        while True:
-            email = input(f"{Colors.INFO}Enter email: {Colors.RESET}").strip()
-            if not email:
-                print(f"{Colors.ERROR}ERROR: Email cannot be empty{Colors.RESET}")
-                continue
-            
-            token = input(f"{Colors.INFO}Enter token: {Colors.RESET}").strip()
-            if not token:
-                print(f"{Colors.ERROR}ERROR: Token cannot be empty{Colors.RESET}")
-                continue
-                
-            print(f"{Colors.SUCCESS}SUCCESS: Account details received{Colors.RESET}")
-            return [{'email': email, 'token': token}]
-
-    @staticmethod
-    def _load_accounts_from_file() -> List[Dict[str, str]]:
+    def load_accounts() -> List[Dict[str, str]]:
         try:
-            accounts = []
-            with open('accounts.txt', 'r') as f:
-                for line in f:
-                    if ':' not in line:
-                        continue
-                
-                    email, token = line.strip().split(':')
-                    if email and token:
-                        accounts.append({
-                            'email': email.strip(),
-                            'token': token.strip()
-                        })
-        
-            if not accounts:
-                raise ValueError("No valid accounts found in accounts.txt")
-        
-            DawnValidatorBot.log_colored("SUCCESS", f"Loaded {len(accounts)} accounts from accounts.txt", Colors.SUCCESS)
+            with open("accounts.txt", "r") as f:
+                accounts = [
+                    {"email": line.split(":")[0], "token": line.split(":")[1].strip()}
+                    for line in f
+                    if ":" in line
+                ]
+            if accounts:
+                DawnValidatorBot.log_colored(
+                    "SUCCESS",
+                    f"Loaded {len(accounts)} accounts from accounts.txt",
+                    Colors.SUCCESS,
+                )
+            else:
+                raise ValueError("No accounts found in accounts.txt")
             return accounts
-        
         except FileNotFoundError:
-            DawnValidatorBot.log_colored("WARNING", "accounts.txt not found", Colors.WARNING)
-            return []
-        except Exception as e:
-            DawnValidatorBot.log_colored("ERROR", f"Error loading accounts from accounts.txt: {str(e)}", Colors.ERROR)
+            DawnValidatorBot.log_colored(
+                "ERROR", "accounts.txt not found. Exiting...", Colors.ERROR
+            )
             return []
 
     def load_proxies(self) -> None:
         try:
-            with open('proxies.txt', 'r') as f:
+            with open("proxies.txt", "r") as f:
                 self.proxies = [line.strip() for line in f if line.strip()]
-                
+
             if self.proxies:
-                self.log_colored("SUCCESS", f"Loaded {len(self.proxies)} proxies", Colors.SUCCESS)
+                self.log_colored(
+                    "SUCCESS", f"Loaded {len(self.proxies)} proxies", Colors.SUCCESS
+                )
             else:
-                self.log_colored("WARNING", "No proxies found in proxies.txt", Colors.WARNING)
-                
+                self.log_colored(
+                    "WARNING", "No proxies found in proxies.txt", Colors.WARNING
+                )
+
         except FileNotFoundError:
             self.log_colored("WARNING", "proxies.txt not found. Running without proxies.", Colors.WARNING)
 
     @staticmethod
     def display_welcome() -> None:
-        print(f"""
+        print(
+            f"""
 {Colors.INFO}{Style.BRIGHT}╔══════════════════════════════════════════════╗
-║            Dawn Farm Bot            ║
-║     Github: https://github.com/Anzcrypto    ║
-║      LFG      ║
+║            Dawn Bot Anzcrypto           ║
+║      Welcome and do with your own risk!      ║
 ╚══════════════════════════════════════════════╝{Colors.RESET}
-""")
+"""
+        )
 
     async def process_account(self, account: Dict[str, str]) -> int:
-        
-        email = account['email']
-        proxy = self.get_random_proxy() 
-        headers = self.get_base_headers(account['token'])
-        
+        email = account["email"]
+        proxy = self.get_random_proxy()
+        headers = self.get_base_headers(account["token"])
+
         if proxy:
-            headers['Proxy'] = proxy
+            headers["Proxy"] = proxy
 
         self.log_colored("INFO", f"Processing account: {email}", Colors.INFO)
         self.log_colored("INFO", f"Using proxy: {proxy or 'No Proxy'}", Colors.INFO)
@@ -248,61 +245,25 @@ class DawnValidatorBot:
 
         return points
 
-    @staticmethod
-    async def countdown(seconds: int) -> None:
-        for remaining in range(seconds, 0, -1):
-            print(f"\r[{datetime.now().strftime('%H:%M:%S')}] {Colors.WARNING}Waiting: {remaining}s{Colors.RESET}", end='')
-            await asyncio.sleep(1)
-        print(f"\n[{datetime.now().strftime('%H:%M:%S')}] {Colors.SUCCESS}Restarting process{Colors.RESET}\n")
 
 async def main():
     bot = DawnValidatorBot()
     bot.display_welcome()
-    
-    print(f"{Colors.INFO}Select mode:{Colors.RESET}")
-    print("1. Single Account")
-    print("2. Multiple Accounts [from accounts.txt]")
-    
-    while True:
-        mode = input(f"{Colors.WARNING}Enter choice (1/2): {Colors.RESET}")
-        if mode in ['1', '2']:
-            break
-        print(f"{Colors.ERROR}ERROR: Invalid choice. Please enter 1 or 2.{Colors.RESET}")
-    
-    accounts = bot.load_accounts(mode)
+
+    accounts = bot.load_accounts()
     if not accounts:
-        bot.log_colored("ERROR", "No accounts available. Exiting...", Colors.ERROR)
         return
 
     bot.load_proxies()
 
     try:
         while True:
-            bot.log_colored("INFO", "Starting new process", Colors.INFO)
-            
-            account_tasks = []
-            for account in accounts:
-                account_tasks.append(bot.process_account(account))
-
-            points_array = await asyncio.gather(*account_tasks)
-            
-            for i, points in enumerate(points_array):
-                if isinstance(points, dict):
-                    total_points = points.get('total', 0)
-                else:
-                    total_points = points
-                    
-                bot.log_colored("INFO", f"Account {accounts[i]['email']} accumulated: {total_points} points", Colors.WARNING)
-            
-            bot.log_colored("INFO", "Process completed", Colors.SUCCESS)
-            bot.log_colored("INFO", f"Total accounts processed: {len(accounts)}", Colors.INFO)
-            
-            await bot.countdown(300)  # Wait 5 minutes before the next cycle
-
+            account_tasks = [bot.process_account(account) for account in accounts]
+            await asyncio.gather(*account_tasks)
+            await asyncio.sleep(300)
     except KeyboardInterrupt:
-        bot.log_colored("WARNING", "Process interrupted by user", Colors.WARNING)
-    except Exception as e:
-        bot.log_colored("ERROR", f"An unexpected error occurred: {str(e)}", Colors.ERROR)
+        bot.log_colored("WARNING", "Process interrupted by user. Exiting...", Colors.WARNING)
+
 
 if __name__ == "__main__":
     asyncio.run(main())
