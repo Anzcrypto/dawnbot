@@ -19,8 +19,9 @@ accounts.txt = Format email:token (one per line).
 proxies.txt = Format http://proxy:port.
 
 
-**Running the Script**
+### **Running the Script**
 
 4.**Run with**: 
 ```bash
 python main.py
+
