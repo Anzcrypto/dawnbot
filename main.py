@@ -1,3 +1,4 @@
+import cloudscraper
 import asyncio
 import logging
 import ssl
@@ -101,6 +102,8 @@ class DawnValidatorBot:
         }
         
         try:
+            scraper = cloudscraper.create_scraper()
+            response = scraper.post(
             response = self.session.post(
                 f"{self.API_URLS['keepalive']}?appid=675f168c9e13e15af4311da1",
                 json=payload,
