@@ -19,7 +19,7 @@ This bot automates the process of validating accounts and fetching points using 
 2. Install dependencies:
 
     ```bash
-    pip install -r req.txt
+    pip3 install -r req.txt
     ```
 
 3. Prepare the `accounts.txt` and `proxies.txt` files (if required).
