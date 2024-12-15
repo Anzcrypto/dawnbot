@@ -1,2 +1,3 @@
 # Example Format
-email:token
+http://ipaddress:port
+http://ipusername:password@ipaddress:port
