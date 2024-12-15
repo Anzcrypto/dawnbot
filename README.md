@@ -5,29 +5,29 @@ An automation script for account validation, point retrieval, and social media v
 ## **Installation**
 1. **Clone the repository**:  
    ```bash
-   git clone 
-   cd 
+   git clone https://github.com/Anzcrypto/dawnbot
+   cd dwnbot
 
-2. Install requirements:
-
+2. **Install requirements**:
+```bash
 pip install -r requirements.txt
 
 
 
-Input Files
+input Files
 
-accounts.txt: Format email:token (one per line).
+accounts.txt = Format email:token (one per line).
 
-proxies.txt (optional): Format http://proxy:port.
+proxies.txt = Format http://proxy:port.
 
 
 Running the Script
 
 Run with:
+```bash
+python main.py
 
-python script.py
-
-Notes
+**Notes**
 
 Use CTRL + C to stop the process.
 
