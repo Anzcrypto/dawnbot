@@ -37,7 +37,7 @@ This bot automates the process of validating accounts and fetching points using 
 1. **Run the script:**
 
     ```bash
-    python main.py
+    python3 main.py
     ```
 
 2. **Notes:**
